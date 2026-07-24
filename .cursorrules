@@ -1,6 +1,6 @@
 # Curso Academia IA — Regras do Projeto
 
-Você está trabalhando em um app Python com **Flet**, usando arquitetura **MVVM** inspirada nas diretrizes oficiais do Flutter.
+Você está trabalhando em um app Python com **Flet**, usando arquitetura **MVVM** inspirada nas diretrizes oficiais do Flutter, com padrões modernos de desenvolvimento e boas práticas equivalentes ao ecossistema Dart.
 
 Consulte `README.md` para detalhes completos da arquitetura.
 
@@ -9,11 +9,12 @@ Consulte `README.md` para detalhes completos da arquitetura.
 ## Stack
 
 - **Linguagem:** Python 3.10+
-- **UI:** Flet (`import flet as ft`)
+- **UI Framework:** Flet (`import flet as ft`)
 - **Ambiente:** `.venv` na raiz do projeto
 - **Entry point:** `main.py`
 - **Código da aplicação:** pasta `lib/`
 - **Dependência externa permitida:** apenas `flet` (não adicionar pacotes sem solicitação explícita)
+- **MCP Tools:** Use ferramentas equivalentes ao ecossistema Dart/Python conforme necessário
 
 ---
 
@@ -69,7 +70,154 @@ Cada pacote Python deve ter `__init__.py`.
 
 ---
 
-## Responsabilidades por camada
+## Diretrizes de Interação (adaptado de Flutter)
+
+- **Persona do usuário:** Assume-se familiaridade com conceitos de programação, mas pode ser novo em Python/Flet
+- **Explicações:** Ao gerar código, forneça explicações para recursos específicos: type hints, async/await, context managers
+- **Clarificação:** Se um pedido for ambíguo, peça esclarecimentos sobre funcionalidade e plataforma alvo
+- **Dependências:** Ao sugerir novas dependências, explique benefícios e compatibilidade
+- **Formatação:** Use `black` ou `autopep8` para garantir formatação consistente
+- **Correções:** Use `ruff` ou `pylint` para identificar erros comuns e conformidade com análise
+- **Linting:** Use linters recomendados para captar problemas antes da compilação
+
+---
+
+## Padrões de Código Python (Dart Best Practices Adaptadas)
+
+### Princípios Gerais
+
+- **Effective Python:** Siga os padrões oficiais de código Python
+- **Type Hints:** Use type hints completos em funções, métodos e propriedades
+- **Organização de Classes:** Defina classes relacionadas no mesmo módulo; para grandes módulos, exporte bibliotecas privadas menores
+- **Organização de Bibliotecas:** Agrupe bibliotecas relacionadas na mesma pasta
+- **Documentação de API:** Adicione docstrings a todas as APIs públicas (classes, métodos, funções de topo)
+- **Comentários:** Escreva comentários claros para código complexo. Evite sobre-comentar
+- **PEP 257:** Siga convenções de docstring (use `"""` para docstrings)
+
+### Async/Await e Concorrência
+
+- **Async/Await:** Use `async`/`await` para operações assíncronas com tratamento robusto de erros
+- **Context Managers:** Use `with` statements para gerenciar recursos
+- **Tasks vs Threads:** Prefira `asyncio.Task` sobre threads quando possível
+
+### Null Safety / Optional Types
+
+- **Type Hints Opcionais:** Use `Optional[T]` ou `T | None` para valores opcionais
+- **Verificações Explícitas:** Evite assumir que valores são não-nulos sem verificação
+- **Default Values:** Forneça valores padrão sensatos em construtores
+
+### Pattern Matching e Estruturas de Dado
+
+- **Dataclasses:** Use `@dataclass(frozen=True)` para imutabilidade
+- **Match Statements (Python 3.10+):** Use pattern matching para lógica condicional complexa
+- **Enums:** Use `enum.Enum` para conjuntos fixos de valores
+
+### Tratamento de Exceções
+
+- **Try-Except:** Use blocos `try-except` para tratamento robusto
+- **Exceções Customizadas:** Crie exceções específicas para seu domínio
+- **Context Managers:** Implemente `__enter__` e `__exit__` para limpeza segura de recursos
+
+### Arrow Functions / Lambdas
+
+- **Lambdas Simples:** Use para funções simples de uma linha
+- **Evitar Lambdas Complexas:** Prefira `def` para lógica mais complicada para melhor legibilidade
+
+---
+
+## Qualidade de Código
+
+- **Estrutura:** Adira a estrutura mantenível e separação de responsabilidades
+- **Nomenclatura:** Evite abreviações; use nomes descritivos e consistentes para variáveis, funções e classes
+- **Concisão:** Escreva código tão curto quanto possível mantendo clareza
+- **Simplicidade:** Escreva código direto; código "clever" é difícil de manter
+- **Tratamento de Erros:** Antecipe e trate erros potenciais
+- **Formatação:**
+  - **Comprimento de linha:** Máximo 88 caracteres (padrão Black)
+  - **Convenção de nomes:** `PascalCase` para classes, `snake_case` para funções/variáveis e arquivos
+- **Funções:**
+  - Mantenha funções pequenas com propósito único
+  - Esforce-se por menos de 20 linhas quando possível
+
+---
+
+## Boas Práticas com Flet
+
+### Componentes e Widgets
+
+- **Imutabilidade:** Prefira dados imutáveis; use `@dataclass(frozen=True)`
+- **Composição:** Favoreça composição para construir UIs complexas, evitando aninhamento profundo
+- **Widgets Reutilizáveis:** Crie pequenas classes de controles privados em `lib/ui/core/ui/`
+- **Performance de Build:** Evite operações custosas (rede, cálculos complexos) no método `build()`
+- **Lazy Loading:** Use `Column(scroll=ft.ScrollMode.AUTO)` ou construção dinâmica para listas grandes
+
+### State Management (Flet Específico)
+
+- **ChangeNotifier:** Para estado compartilhado entre múltiplos ViewModels
+- **ValueNotifier:** Para estado simples e local de um único valor
+- **Listeners:** Registre listeners em ViewModels e atualize controles via `control.update()`
+- **Unidirectional Data Flow:** Eventos sobem (View → ViewModel); dados descem (Repository → ViewModel → View)
+
+### Navegação
+
+- **Sem Routing Automático:** Flet não possui roteador nativo; gerencie manualmente em `main.py`
+- **Page Navigation:** Use `page.views` e `page.go()` para transições entre telas
+- **Parâmetros:** Passe dados entre telas via construtor do ViewModel ou através de Repository compartilhado
+
+### Tema e Estilo
+
+- **Centralizado:** Defina paletas de cores e estilos em `lib/ui/core/ui/` (ex.: `theme.py`)
+- **Modo Escuro/Claro:** Implemente suporte com `theme_mode` condicional
+- **Cores:** Use `ft.colors` para consistência ou defina tokens customizados
+
+### Acessibilidade (A11Y)
+
+- **Contraste:** Garanta razão de contraste de pelo menos 4.5:1 entre texto e fundo
+- **Rótulos Semânticos:** Use `tooltip` e `semantic_label` em controles quando apropriado
+- **Escalabilidade de Fontes:** Teste UI com tamanhos de fonte aumentados
+
+---
+
+## Gestão de Dependências
+
+- **Ambiente Virtual:** Sempre use `.venv` para isolamento de dependências
+- **pip:** Use `pip` ou `pip-tools` para gerenciar pacotes
+- **Packages Externos:** Se uma feature requer pacote externo, justifique e peça aprovação explícita
+- **Adicionando Dependências:** Execute `pip install <package>` e atualize `requirements.txt`
+- **Removendo Dependências:** Execute `pip uninstall <package>` e atualize `requirements.txt`
+
+---
+
+## Testes
+
+- **Testes Unitários:** Use `unittest` ou `pytest` para lógica de camada de dados/domínio
+- **Testes de Widget:** Não aplicável a Flet; simule no ViewModel em vez disso
+- **Testes de Integração:** Teste fluxos de usuário ponta-a-ponta
+- **Convenção:** Siga padrão Arrange-Act-Assert (ou Given-When-Then)
+- **Cobertura:** Almeje alta cobertura para lógica crítica
+
+---
+
+## Documentação
+
+- **Filosofia de Comentários:** Explique *por quê*, não *o quê*; o código deve ser auto-explicativo
+- **Doc Comments:** Use `"""` para docstrings em todas as APIs públicas
+- **Formato:** Comece com resumo de uma linha; separe com linha em branco para mais contextos
+- **Exemplos de Código:** Inclua exemplos em docstrings quando apropriado
+- **Evite Redundância:** Não repita informações óbvias da assinatura do código
+
+---
+
+## Diretrizes de API
+
+Ao construir APIs reutilizáveis (bibliotecas, módulos compartilhados):
+
+- **Perspectiva do Usuário:** Projete APIs de quem as usará; devem ser intuitivas
+- **Documentação Essencial:** Documentação clara é parte do design de API
+- **Exemplos:** Forneça exemplos de uso em docstrings
+- **Naming:** Use nomes auto-explicativos que indiquem claramente propósito e retorno
+
+---
 
 ### View (`lib/ui/<feature>/widgets/`)
 
@@ -158,19 +306,87 @@ Um par View + ViewModel por feature. Repositories podem ser compartilhados por v
 
 ---
 
+## Boas Práticas de Layout (Flet)
+
+### Containers Flexíveis
+
+- **Expand:** Use para crescer para preencher espaço disponível
+- **Fit:** Use `expand` com `expand_loose` para controlar flexibilidade
+- **Wrap:** Use para séries de widgets que overflow; movem para próxima linha
+- **Responsividade:** Use `LayoutBuilder` ou `page.size` para decisões baseadas em espaço disponível
+
+### Conteúdo Geral
+
+- **ScrollView:** Use quando conteúdo é intrinsecamente maior que viewport
+- **ListView:** Para listas longas, use construção dinâmica para performance (lazy loading)
+- **GridView:** Para grades, similiar lazy loading que ListView
+- **Stack:** Use `Positioned` ou `Align` para posicionamento de camadas
+
+### Performance de Componentes
+
+- **Memoização:** Cache objetos imutáveis quando possível
+- **Avoid Rebuild:** Minimize recalculates em métodos `build()`
+- **Const Constructors:** Prefira objetos imutáveis para reduzir reconstruções
+
+---
+
+## MCP Tools e Equivalentes Python/Flet
+
+Ao trabalhar com assistentes de IA, referencie estas ferramentas equivalentes:
+
+### Análise e Formatação de Código
+
+- **Black**: Formatação automática de código Python (`pip install black`)
+  - Equivalente: `dart format` → `black <file>`
+- **Ruff**: Linting rápido e correção de código (`pip install ruff`)
+  - Equivalente: `dart analyze` → `ruff check <file>`
+- **Pylint**: Análise estática avançada (`pip install pylint`)
+  - Equivalente: Dart linter rules
+
+### Gerenciamento de Pacotes
+
+- **pip**: Gerenciador de pacotes padrão Python
+  - Equivalente: `pub` (Dart)
+  - Uso: `pip install <package>`, `pip list`, `pip show <package>`
+- **pip-tools**: Gestão avançada de dependências (`pip install pip-tools`)
+  - Equivalente: `pub query`
+- **Virtual Environment (venv)**: Isolamento de dependências
+  - Equivalente: Dart SDK environments
+
+### Execução e Testing
+
+- **pytest**: Framework de testes (`pip install pytest`)
+  - Equivalente: `flutter test` para unit tests
+  - Uso: `pytest`, `pytest -v`, `pytest --cov`
+- **unittest**: Testes integrados (parte de stdlib)
+  - Equivalente: `package:test` (Dart)
+- **mypy**: Type checking estático (`pip install mypy`)
+  - Equivalente: Dart static analysis
+
+### Documentação
+
+- **pydoc**: Documentação automática (`pydoc3 <module>`)
+  - Equivalente: `dartdoc`
+- **Sphinx**: Geração de documentação (`pip install sphinx`)
+  - Equivalente: `dartdoc` com temas customizados
+
+---
+
 ## Proibido (até solicitação explícita)
 
-- Adicionar pacotes externos (provider, httpx, sqlalchemy, etc.)
-- Implementar backend/API em `services/`
-- Persistência local ou remota (storage)
-- Autenticação
-- Internacionalização (i18n)
+- Adicionar pacotes externos (requests, sqlalchemy, pydantic, etc.) sem justificativa e aprovação
+- Implementar backend/API em `services/` sem arquitetura clara
+- Persistência local ou remota (storage, database, cache)
+- Autenticação/Autorização complexa
+- Internacionalização (i18n) / Localização
 - Estrutura de testes (`test/`, `testing/`)
-- Logging estruturado
+- Logging estruturado (logging framework configurado)
 - Lógica de negócio dentro de Views
-- ViewModels importando Flet
-- Views acessando Repositories diretamente
-- Repositories cientes uns dos outros
+- ViewModels importando `flet` — devem ser agnósticos de UI
+- Views acessando Repositories diretamente — sempre via ViewModel
+- Repositories cientes uns dos outros — cada um é SSOT independente
+- Validação complexa na UI — coloque em Domain/Repository
+- State global não controlado — todo estado deve fluir via Repository/ViewModel
 
 ---
 
@@ -183,6 +399,7 @@ python main.py
 
 Antes de concluir alterações:
 - Verificar que o projeto compila (`python -m compileall lib main.py`)
+- Executar formatação com `black` (se disponível)
 - Garantir ausência de erros de lint nos arquivos alterados
 - Não criar arquivos de documentação (README, etc.) sem solicitação
 
@@ -192,3 +409,18 @@ Antes de concluir alterações:
 
 - Comunicar com o usuário em **português**
 - Código, nomes de classes/métodos e comentários em **inglês** ou **português**, mantendo consistência com os arquivos existentes da feature
+
+---
+
+## Referências Externas
+
+Diretrizes que informam estas regras (adaptadas de Flutter para Flet):
+
+- **Flutter App Architecture:** https://docs.flutter.dev/app-architecture
+- **Effective Dart:** https://dart.dev/effective-dart
+- **Flutter Case Study:** https://docs.flutter.dev/app-architecture/case-study
+- **Flutter Rules & Best Practices:** https://raw.githubusercontent.com/flutter/flutter/refs/heads/main/docs/rules/rules.md
+- **Flet Documentation:** https://flet.dev
+- **Python Enhancement Proposals (PEP 8, PEP 257):** https://www.python.org/dev/peps
+- **Black Code Formatter:** https://black.readthedocs.io
+- **Ruff Linter:** https://docs.astral.sh/ruff

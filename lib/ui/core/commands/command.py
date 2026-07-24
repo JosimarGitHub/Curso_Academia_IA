@@ -23,7 +23,7 @@ class Command0(ChangeNotifier, Generic[R]):
 
         self.running = True
         self.error = None
-        self.notify_listeners()
+        self._safe_notify_listeners()
 
         try:
             self.result = self._action()
@@ -31,7 +31,13 @@ class Command0(ChangeNotifier, Generic[R]):
             self.error = error
         finally:
             self.running = False
+            self._safe_notify_listeners()
+
+    def _safe_notify_listeners(self) -> None:
+        try:
             self.notify_listeners()
+        except Exception:
+            pass
 
 
 class Command1(ChangeNotifier, Generic[T, R]):
@@ -50,7 +56,7 @@ class Command1(ChangeNotifier, Generic[T, R]):
 
         self.running = True
         self.error = None
-        self.notify_listeners()
+        self._safe_notify_listeners()
 
         try:
             self.result = self._action(argument)
@@ -58,4 +64,4 @@ class Command1(ChangeNotifier, Generic[T, R]):
             self.error = error
         finally:
             self.running = False
-            self.notify_listeners()
+            self._safe_notify_listeners()

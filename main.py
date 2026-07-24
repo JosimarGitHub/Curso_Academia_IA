@@ -1,22 +1,20 @@
 import flet as ft
 
-from lib.data.repositories.counter_repository import CounterRepository
-from lib.ui.counter.view_models.counter_view_model import CounterViewModel
-from lib.ui.counter.widgets.counter_screen import CounterScreen
+from lib.data.repositories.sensor_repository import SensorRepository
+from lib.ui.sensor.view_models.sensor_view_model import SensorViewModel
+from lib.ui.sensor.widgets.sensor_screen import SensorScreen
 
 
 def main(page: ft.Page) -> None:
-    page.title = "Counter"
+    page.title = "Sensor Reader"
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
 
-    counter_repository = CounterRepository()
-    counter_view_model = CounterViewModel(counter_repository)
-    counter_screen = CounterScreen(counter_view_model)
+    sensor_repository = SensorRepository()
+    sensor_view_model = SensorViewModel(sensor_repository)
+    sensor_screen = SensorScreen(sensor_view_model)
 
-    page.add(counter_screen.build())
-    page.floating_action_button = counter_screen.build_floating_action_button()
-    page.floating_action_button_location = ft.FloatingActionButtonLocation.END_FLOAT
+    page.add(sensor_screen.build())
 
 
 ft.app(target=main)
