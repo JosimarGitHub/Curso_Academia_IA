@@ -1,0 +1,194 @@
+# Curso Academia IA — Regras do Projeto
+
+Você está trabalhando em um app Python com **Flet**, usando arquitetura **MVVM** inspirada nas diretrizes oficiais do Flutter.
+
+Consulte `README.md` para detalhes completos da arquitetura.
+
+---
+
+## Stack
+
+- **Linguagem:** Python 3.10+
+- **UI:** Flet (`import flet as ft`)
+- **Ambiente:** `.venv` na raiz do projeto
+- **Entry point:** `main.py`
+- **Código da aplicação:** pasta `lib/`
+- **Dependência externa permitida:** apenas `flet` (não adicionar pacotes sem solicitação explícita)
+
+---
+
+## Arquitetura (MVVM + Flutter Case Study)
+
+Princípios obrigatórios:
+
+1. **Separação de responsabilidades** — UI, lógica de apresentação e dados em camadas distintas
+2. **SSOT (Single Source of Truth)** — cada tipo de dado tem um único Repository responsável
+3. **UDF (Unidirectional Data Flow)** — eventos sobem (View → ViewModel); dados descem (Repository → ViewModel → View)
+
+Referências:
+- https://docs.flutter.dev/app-architecture/guide
+- https://docs.flutter.dev/app-architecture/case-study
+- https://docs.flutter.dev/app-architecture/concepts
+
+---
+
+## Estrutura de pastas
+
+Organização híbrida: UI por **feature**, data por **tipo**.
+
+```
+lib/
+├── ui/
+│   ├── core/                    # shared: ChangeNotifier, Command, widgets reutilizáveis
+│   │   ├── commands/
+│   │   ├── listenable/
+│   │   └── ui/
+│   └── <feature_name>/
+│       ├── view_models/
+│       └── widgets/
+├── domain/
+│   └── models/
+└── data/
+    ├── repositories/
+    ├── services/                # reservado (APIs/plugins)
+    └── model/                   # reservado (modelos de API)
+main.py                          # DI manual + ft.app()
+```
+
+### Nomenclatura
+
+| Componente | Arquivo |
+|------------|---------|
+| View | `<feature>_screen.py` → classe `<Feature>Screen` |
+| ViewModel | `<feature>_view_model.py` → classe `<Feature>ViewModel` |
+| Repository | `<feature>_repository.py` → classe `<Feature>Repository` |
+| Domain model | `<feature>_model.py` → classe `<Feature>Model` |
+
+Cada feature em `lib/ui/<feature>/` deve ter `view_models/` e `widgets/`.
+Cada pacote Python deve ter `__init__.py`.
+
+---
+
+## Responsabilidades por camada
+
+### View (`lib/ui/<feature>/widgets/`)
+
+- Renderiza controles Flet (`ft.Text`, `ft.Column`, etc.)
+- Expõe `build() -> ft.Control`
+- Encaminha eventos ao ViewModel via `Command.execute()` ou métodos expostos
+- Escuta mudanças com `view_model.add_listener(...)` e chama `.update()` nos controles
+- **NÃO** contém regra de negócio
+- **NÃO** acessa Repository ou Services diretamente
+- **NÃO** muta estado de domínio
+
+### ViewModel (`lib/ui/<feature>/view_models/`)
+
+- Estende `ChangeNotifier` de `lib.ui.core.listenable.change_notifier`
+- Recebe Repositories via construtor (injeção de dependência)
+- Transforma dados do Repository em estado/formato para a UI
+- Expõe comandos (`Command0`, `Command1`) de `lib.ui.core.commands.command`
+- Chama `notify_listeners()` após mudanças de estado
+- **NÃO** importa `flet` — ViewModels são agnósticos de UI
+
+### Repository (`lib/data/repositories/`)
+
+- SSOT para um tipo de dado
+- Único lugar autorizado a mutar esse dado
+- Retorna modelos de domínio (`lib/domain/models/`)
+- **NÃO** conhece View ou ViewModel
+- **NÃO** conhece outros Repositories
+
+### Domain (`lib/domain/models/`)
+
+- `@dataclass(frozen=True)` para imutabilidade
+- Sem dependência de Flet, HTTP ou UI
+
+### Core (`lib/ui/core/`)
+
+- `ChangeNotifier` — equivalente ao do Flutter
+- `Command0` / `Command1` — padrão Command para ações da UI
+- Widgets compartilhados em `ui/core/ui/`
+
+### main.py
+
+- Único ponto de composição (DI manual)
+- Instancia Repository → ViewModel → View
+- Configura `ft.Page` e chama `ft.app(target=main)`
+- Sem lógica de negócio
+
+---
+
+## Padrões de código Python
+
+- Usar type hints em métodos e propriedades
+- Imports absolutos a partir de `lib.*` (ex.: `from lib.domain.models.counter_model import CounterModel`)
+- Docstrings curtas em classes públicas
+- Preferir `@property` para expor estado somente leitura
+- Métodos privados com prefixo `_`
+- Manter diffs mínimos e focados; seguir o estilo dos arquivos existentes
+
+### Exemplo — fluxo correto do Counter
+
+```python
+# View: encaminha evento
+on_click=lambda _: self._view_model.increment.execute()
+
+# ViewModel: orquestra mutação
+def _increment(self) -> None:
+    self._counter_repository.increment()
+    self.notify_listeners()
+
+# View: reage ao estado
+def _on_view_model_changed(self) -> None:
+    self._count_text.value = self._view_model.count_label
+    self._count_text.update()
+```
+
+---
+
+## Como adicionar uma nova feature
+
+1. `lib/domain/models/<feature>_model.py`
+2. `lib/data/repositories/<feature>_repository.py`
+3. `lib/ui/<feature>/view_models/<feature>_view_model.py`
+4. `lib/ui/<feature>/widgets/<feature>_screen.py`
+5. Registrar dependências em `main.py`
+
+Um par View + ViewModel por feature. Repositories podem ser compartilhados por vários ViewModels.
+
+---
+
+## Proibido (até solicitação explícita)
+
+- Adicionar pacotes externos (provider, httpx, sqlalchemy, etc.)
+- Implementar backend/API em `services/`
+- Persistência local ou remota (storage)
+- Autenticação
+- Internacionalização (i18n)
+- Estrutura de testes (`test/`, `testing/`)
+- Logging estruturado
+- Lógica de negócio dentro de Views
+- ViewModels importando Flet
+- Views acessando Repositories diretamente
+- Repositories cientes uns dos outros
+
+---
+
+## Execução
+
+```bash
+source .venv/bin/activate
+python main.py
+```
+
+Antes de concluir alterações:
+- Verificar que o projeto compila (`python -m compileall lib main.py`)
+- Garantir ausência de erros de lint nos arquivos alterados
+- Não criar arquivos de documentação (README, etc.) sem solicitação
+
+---
+
+## Idioma
+
+- Comunicar com o usuário em **português**
+- Código, nomes de classes/métodos e comentários em **inglês** ou **português**, mantendo consistência com os arquivos existentes da feature
